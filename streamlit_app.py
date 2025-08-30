@@ -1,9 +1,10 @@
 import streamlit as st
 import requests
 from io import BytesIO
+import os
 
 # FastAPI backend URL
-API_BASE_URL = "http://127.0.0.1:4545"
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:4545")
 
 # Streamlit app configuration
 st.set_page_config(page_title="PDF Upload and RAG Search", layout="wide")
