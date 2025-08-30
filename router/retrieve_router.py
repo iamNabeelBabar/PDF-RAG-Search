@@ -2,13 +2,6 @@ from fastapi import APIRouter, Header
 from pydantic import BaseModel
 from openai import OpenAI
 from pinecone import Pinecone
-import os
-
-# Load Pinecone API key from environment
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-
-# Initialize Pinecone client
-pc = Pinecone(api_key=PINECONE_API_KEY)
 
 # Router object
 router = APIRouter()
@@ -22,9 +15,10 @@ class QueryRequest(BaseModel):
 
 
 @router.post("/rag-search")
-def rag_search(request: QueryRequest, openai_api_key: str = Header(...)):
-    # Initialize OpenAI client with header-provided API key
+def rag_search(request: QueryRequest, openai_api_key: str = Header(...), pinecone_api_key: str = Header(...)):
+    # Initialize OpenAI and Pinecone clients with header-provided API keys
     client = OpenAI(api_key=openai_api_key)
+    pc = Pinecone(api_key=pinecone_api_key)
 
     # 1. Encode query using OpenAI embeddings
     embed = client.embeddings.create(
