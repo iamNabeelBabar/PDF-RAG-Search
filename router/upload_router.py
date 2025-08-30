@@ -5,12 +5,6 @@ from langchain_pinecone import PineconeVectorStore
 from services.pinecone_services import index_creation
 import tempfile
 import os
-from dotenv import load_dotenv
-
-load_dotenv()  # Load environment variables from .env file
-
-# Load Pinecone API key from env
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
 router = APIRouter(tags=["Upload"])
 
@@ -19,7 +13,8 @@ async def create_upload_file(
     file: UploadFile = File(...),
     index_name: str = "main",
     namespace: str = "default",
-    openai_api_key: str = Header(...)
+    openai_api_key: str = Header(...),
+    pinecone_api_key: str = Header(...)
 ):
     # Save uploaded file temporarily
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -42,7 +37,7 @@ async def create_upload_file(
     )
 
     # Ensure Pinecone index exists
-    index = index_creation(index_name=index_name, dimension=1536)
+    index = index_creation(index_name=index_name, dimension=1536, api_key=pinecone_api_key)
 
     # Store chunks into Pinecone
     vectorstore = PineconeVectorStore.from_documents(
