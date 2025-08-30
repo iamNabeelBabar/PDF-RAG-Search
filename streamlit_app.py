@@ -103,3 +103,55 @@ with tab1:
 
 # Search Tab
 with tab2:
+    st.header("Search with RAG")
+    with st.form("search_form"):
+        query = st.text_area("Enter your query")
+        index_name = st.text_input("Index Name", value="main", key="search_index")
+        namespace = st.text_input("Namespace", value="default", key="search_namespace")
+        top_k = st.number_input("Top K Results", min_value=1, max_value=10, value=5, step=1)
+        search_button = st.form_submit_button("Search")
+
+        if search_button:
+            if not openai_api_key or not pinecone_api_key:
+                st.error("Please provide both OpenAI and Pinecone API keys in the sidebar.")
+            elif query.strip():
+                try:
+                    # Prepare payload for RAG search
+                    payload = {
+                        "index_name": index_name,
+                        "namespace": namespace,
+                        "query": query,
+                        "top_k": int(top_k)
+                    }
+                    headers = {
+                        "OpenAI-API-Key": openai_api_key,
+                        "Pinecone-API-Key": pinecone_api_key
+                    }
+                    
+                    # Send POST request to FastAPI /rag-search endpoint
+                    response = requests.post(
+                        f"{API_BASE_URL}/retrieve/rag-search",
+                        json=payload,
+                        headers=headers,
+                        timeout=120
+                    )
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        st.write("**Query:**")
+                        st.write(result["query"])
+                        st.write("**Answer:**")
+                        st.markdown(result["answer"])
+                    else:
+                        error_detail = response.json().get('detail', 'Unknown error')
+                        st.error(f"Search failed: {error_detail}")
+                except requests.exceptions.ConnectionError:
+                    st.error(f"Failed to connect to the backend at {API_BASE_URL}. Ensure the FastAPI server is running and the URL is correct.")
+                except requests.exceptions.Timeout:
+                    st.error("Request timed out. Check your network or backend server performance.")
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Error connecting to the server: {str(e)}")
+                except Exception as e:
+                    st.error(f"An unexpected error occurred: {str(e)}")
+            else:
+                st.warning("Please enter a query before submitting.")
